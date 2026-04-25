@@ -1,0 +1,1638 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="theme-color" content="#0a1628"/>
+<meta name="description" content="E-Medicine B2B Pharmacy Ordering Platform"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<title>E-Medicine | B2B Pharma</title>
+<link rel="manifest" href="manifest.json"/>
+<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect width='180' height='180' rx='38' fill='%230a1628'/><rect x='52' y='80' width='76' height='20' rx='10' fill='%230d9488'/><rect x='80' y='52' width='20' height='76' rx='10' fill='%230d9488'/></svg>"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+:root {
+  --navy: #0a1628;
+  --navy-mid: #112240;
+  --navy-light: #1a3460;
+  --teal: #0d9488;
+  --teal-light: #14b8a6;
+  --teal-glow: #0d948840;
+  --white: #f8fafc;
+  --white-dim: #e2e8f0;
+  --white-muted: #94a3b8;
+  --accent: #06d6a0;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+  --success: #22c55e;
+  --border: #1e3a5f;
+  --card: #0f1f3d;
+  --card-hover: #142952;
+  --font: 'DM Sans', sans-serif;
+  --mono: 'DM Mono', monospace;
+  --radius: 12px;
+  --radius-sm: 8px;
+  --shadow: 0 4px 24px rgba(0,0,0,0.4);
+  --shadow-teal: 0 0 20px rgba(13,148,136,0.3);
+  --transition: all 0.2s cubic-bezier(0.4,0,0.2,1);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  font-family: var(--font);
+  background: var(--navy);
+  color: var(--white);
+  overflow-x: hidden;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* ─── SCROLLBAR ─── */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: var(--navy); }
+::-webkit-scrollbar-thumb { background: var(--teal); border-radius: 4px; }
+
+/* ─── LAYOUT ─── */
+#app { display: flex; flex-direction: column; min-height: 100vh; }
+
+.screen { display: none; flex: 1; flex-direction: column; }
+.screen.active { display: flex; }
+
+/* ─── TOP BAR ─── */
+.topbar {
+  background: var(--navy-mid);
+  border-bottom: 1px solid var(--border);
+  padding: 0 20px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  backdrop-filter: blur(10px);
+}
+
+.topbar-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.brand-icon {
+  width: 34px; height: 34px;
+  background: linear-gradient(135deg, var(--teal), var(--accent));
+  border-radius: 9px;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: var(--shadow-teal);
+}
+
+.brand-text { font-size: 17px; font-weight: 700; letter-spacing: -0.3px; }
+.brand-text span { color: var(--teal-light); }
+
+.topbar-right { display: flex; align-items: center; gap: 14px; }
+
+.cart-badge-btn {
+  position: relative;
+  background: var(--card);
+  border: 1px solid var(--border);
+  color: var(--white);
+  border-radius: 10px;
+  padding: 7px 14px;
+  font-family: var(--font);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex; align-items: center; gap: 7px;
+  transition: var(--transition);
+}
+.cart-badge-btn:hover { background: var(--card-hover); border-color: var(--teal); }
+
+.cart-count {
+  background: var(--teal);
+  color: white;
+  border-radius: 50%;
+  width: 18px; height: 18px;
+  font-size: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700;
+}
+
+/* ─── BOTTOM NAV ─── */
+.bottom-nav {
+  background: var(--navy-mid);
+  border-top: 1px solid var(--border);
+  display: flex;
+  padding: 8px 0 max(8px, env(safe-area-inset-bottom));
+  position: sticky;
+  bottom: 0;
+  z-index: 100;
+}
+
+.nav-item {
+  flex: 1;
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  padding: 6px 4px;
+  cursor: pointer;
+  color: var(--white-muted);
+  font-size: 10px;
+  font-weight: 500;
+  transition: var(--transition);
+  border: none; background: none;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+
+.nav-item.active { color: var(--teal-light); }
+.nav-item:hover { color: var(--white-dim); }
+.nav-item svg { stroke-width: 1.8px; }
+
+/* ─── PROFILE SETUP ─── */
+#screen-profile {
+  align-items: center;
+  justify-content: center;
+  padding: 24px 20px;
+  background: radial-gradient(ellipse at 50% 0%, #0d3d3020 0%, transparent 60%), var(--navy);
+}
+
+.profile-card {
+  width: 100%; max-width: 420px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 36px 28px;
+  box-shadow: var(--shadow);
+}
+
+.profile-header {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.profile-logo {
+  width: 64px; height: 64px;
+  background: linear-gradient(135deg, var(--teal), var(--accent));
+  border-radius: 18px;
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 16px;
+  box-shadow: 0 0 30px rgba(13,148,136,0.4);
+}
+
+.profile-header h1 { font-size: 24px; font-weight: 700; margin-bottom: 6px; }
+.profile-header p { color: var(--white-muted); font-size: 14px; }
+
+.form-group { margin-bottom: 18px; }
+.form-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--white-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin-bottom: 7px;
+}
+
+.form-input {
+  width: 100%;
+  background: var(--navy-mid);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  font-family: var(--font);
+  font-size: 15px;
+  color: var(--white);
+  transition: var(--transition);
+  outline: none;
+}
+
+.form-input:focus {
+  border-color: var(--teal);
+  box-shadow: 0 0 0 3px var(--teal-glow);
+}
+
+.form-input::placeholder { color: var(--white-muted); }
+
+.btn-primary {
+  width: 100%;
+  background: linear-gradient(135deg, var(--teal), var(--teal-light));
+  color: white;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 14px;
+  font-family: var(--font);
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: var(--transition);
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  letter-spacing: 0.2px;
+}
+
+.btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 24px rgba(13,148,136,0.4);
+}
+
+.btn-primary:active { transform: translateY(0); }
+
+/* ─── SHOP ─── */
+#screen-shop { overflow: hidden; }
+
+.shop-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 16px 20px;
+}
+
+.search-bar {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 11px 16px;
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 16px;
+  transition: var(--transition);
+}
+
+.search-bar:focus-within { border-color: var(--teal); box-shadow: 0 0 0 3px var(--teal-glow); }
+
+.search-bar input {
+  flex: 1;
+  background: none; border: none; outline: none;
+  font-family: var(--font); font-size: 15px; color: var(--white);
+}
+
+.search-bar input::placeholder { color: var(--white-muted); }
+.search-bar svg { color: var(--white-muted); flex-shrink: 0; }
+
+.section-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.section-title { font-size: 13px; font-weight: 600; color: var(--white-muted); text-transform: uppercase; letter-spacing: 0.8px; }
+
+.products-grid {
+  display: flex; flex-direction: column; gap: 10px;
+}
+
+.product-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  display: flex; align-items: center; gap: 14px;
+  transition: var(--transition);
+}
+
+.product-card:hover { background: var(--card-hover); border-color: #2a4a7f; }
+
+.product-icon {
+  width: 44px; height: 44px; flex-shrink: 0;
+  background: linear-gradient(135deg, var(--teal-glow), #06d6a010);
+  border: 1px solid var(--teal);
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--teal-light);
+}
+
+.product-info { flex: 1; min-width: 0; }
+
+.product-name {
+  font-size: 14px; font-weight: 600; margin-bottom: 3px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+.product-meta { display: flex; gap: 8px; align-items: center; }
+
+.product-price {
+  font-size: 13px; font-weight: 700; color: var(--teal-light);
+  font-family: var(--mono);
+}
+
+.product-stock {
+  font-size: 11px; color: var(--white-muted);
+  background: var(--navy-mid);
+  padding: 2px 7px;
+  border-radius: 20px;
+}
+
+.product-stock.low { color: var(--warning); }
+.product-stock.out { color: var(--danger); }
+
+.qty-control {
+  display: flex; align-items: center; gap: 8px; flex-shrink: 0;
+}
+
+.qty-btn {
+  width: 30px; height: 30px;
+  background: var(--navy-mid);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--white);
+  font-size: 16px; font-weight: 600;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: var(--transition);
+}
+
+.qty-btn:hover { background: var(--teal); border-color: var(--teal); }
+.qty-btn:active { transform: scale(0.92); }
+
+.qty-value {
+  font-family: var(--mono);
+  font-size: 14px; font-weight: 600;
+  min-width: 24px; text-align: center;
+  color: var(--teal-light);
+}
+
+/* ─── CART PANEL ─── */
+.cart-panel {
+  position: fixed; inset: 0;
+  z-index: 200;
+  display: none;
+}
+
+.cart-panel.open { display: block; }
+
+.cart-overlay {
+  position: absolute; inset: 0;
+  background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(3px);
+}
+
+.cart-drawer {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  background: var(--navy-mid);
+  border-top: 1px solid var(--border);
+  border-radius: 20px 20px 0 0;
+  padding: 20px 20px max(20px, env(safe-area-inset-bottom));
+  max-height: 80vh;
+  overflow-y: auto;
+  animation: slideUp 0.3s cubic-bezier(0.4,0,0.2,1);
+}
+
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+.cart-handle {
+  width: 36px; height: 4px;
+  background: var(--border);
+  border-radius: 2px;
+  margin: 0 auto 20px;
+}
+
+.cart-title { font-size: 18px; font-weight: 700; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+
+.cart-items { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+
+.cart-item {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+
+.cart-item-name { font-size: 14px; font-weight: 600; margin-bottom: 2px; }
+.cart-item-detail { font-size: 12px; color: var(--white-muted); font-family: var(--mono); }
+
+.cart-item-remove {
+  color: var(--danger);
+  background: none; border: none;
+  cursor: pointer; padding: 4px;
+  opacity: 0.7; transition: var(--transition);
+}
+.cart-item-remove:hover { opacity: 1; }
+
+.cart-summary {
+  border-top: 1px solid var(--border);
+  padding-top: 16px;
+  margin-bottom: 16px;
+}
+
+.summary-row {
+  display: flex; justify-content: space-between;
+  font-size: 14px; margin-bottom: 8px; color: var(--white-muted);
+}
+
+.summary-total {
+  display: flex; justify-content: space-between;
+  font-size: 18px; font-weight: 700;
+  color: var(--teal-light);
+  font-family: var(--mono);
+  margin-top: 4px;
+}
+
+.btn-whatsapp {
+  width: 100%;
+  background: linear-gradient(135deg, #25d366, #128c7e);
+  color: white;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 14px;
+  font-family: var(--font);
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  transition: var(--transition);
+  letter-spacing: 0.2px;
+}
+
+.btn-whatsapp:hover { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(37,211,102,0.3); }
+
+.empty-cart {
+  text-align: center;
+  padding: 32px 0;
+  color: var(--white-muted);
+}
+.empty-cart svg { margin: 0 auto 12px; display: block; opacity: 0.4; }
+.empty-cart p { font-size: 14px; }
+
+/* ─── PROFILE SCREEN ─── */
+#screen-myprofile { overflow-y: auto; padding: 20px 16px; }
+
+.profile-view-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px;
+  margin-bottom: 16px;
+}
+
+.profile-view-header {
+  display: flex; align-items: center; gap: 14px;
+  margin-bottom: 20px;
+}
+
+.avatar {
+  width: 52px; height: 52px;
+  background: linear-gradient(135deg, var(--teal), var(--accent));
+  border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px; font-weight: 700; color: white;
+}
+
+.profile-view-name { font-size: 18px; font-weight: 700; }
+.profile-view-sub { font-size: 13px; color: var(--white-muted); }
+
+.info-row {
+  display: flex; align-items: flex-start; gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+.info-row:last-child { border-bottom: none; }
+.info-row-icon { color: var(--teal); margin-top: 2px; flex-shrink: 0; }
+.info-row-content {}
+.info-row-label { font-size: 11px; color: var(--white-muted); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 2px; }
+.info-row-value { font-size: 14px; font-weight: 500; }
+
+.btn-secondary {
+  background: var(--card);
+  border: 1px solid var(--border);
+  color: var(--white);
+  border-radius: var(--radius-sm);
+  padding: 12px 16px;
+  font-family: var(--font);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex; align-items: center; gap: 8px;
+  transition: var(--transition);
+  width: 100%;
+  justify-content: center;
+}
+.btn-secondary:hover { background: var(--card-hover); border-color: var(--teal); }
+
+/* ─── ADMIN ─── */
+#screen-admin { overflow: hidden; }
+
+.admin-header {
+  background: var(--navy-mid);
+  border-bottom: 1px solid var(--border);
+  padding: 16px 20px;
+}
+
+.admin-tabs {
+  display: flex; gap: 4px;
+  background: var(--navy);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 4px;
+}
+
+.admin-tab {
+  flex: 1;
+  background: none; border: none;
+  color: var(--white-muted);
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-family: var(--font);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+}
+
+.admin-tab.active {
+  background: var(--teal);
+  color: white;
+}
+
+.admin-content {
+  flex: 1; overflow-y: auto;
+  padding: 16px;
+}
+
+/* Orders Table */
+.orders-table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.orders-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.orders-table th {
+  background: var(--card);
+  padding: 12px 14px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--white-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  white-space: nowrap;
+  border-bottom: 1px solid var(--border);
+}
+
+.orders-table td {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+
+.orders-table tr:last-child td { border-bottom: none; }
+.orders-table tr:hover td { background: var(--card-hover); }
+
+.status-badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 3px 9px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.status-badge.pending { background: rgba(245,158,11,0.15); color: var(--warning); }
+.status-badge.delivered { background: rgba(34,197,94,0.15); color: var(--success); }
+
+.btn-deliver {
+  background: rgba(34,197,94,0.1);
+  border: 1px solid rgba(34,197,94,0.3);
+  color: var(--success);
+  border-radius: 6px;
+  padding: 5px 10px;
+  font-family: var(--font);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+  white-space: nowrap;
+}
+
+.btn-deliver:hover { background: rgba(34,197,94,0.2); }
+
+/* Inventory */
+.inventory-add {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  margin-bottom: 16px;
+}
+
+.inventory-add h3 { font-size: 15px; font-weight: 700; margin-bottom: 14px; color: var(--teal-light); }
+
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+.inventory-list { display: flex; flex-direction: column; gap: 10px; }
+
+.inventory-item {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  display: flex; align-items: center; gap: 12px;
+}
+
+.inventory-item-info { flex: 1; }
+.inventory-item-name { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+.inventory-item-meta { font-size: 12px; color: var(--white-muted); font-family: var(--mono); }
+
+.inventory-edit-form { display: none; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); }
+.inventory-edit-form.open { display: block; }
+.inventory-edit-form .form-row { margin-bottom: 10px; }
+
+.btn-sm {
+  background: var(--card-hover);
+  border: 1px solid var(--border);
+  color: var(--white);
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-family: var(--font);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+}
+.btn-sm:hover { border-color: var(--teal); color: var(--teal-light); }
+.btn-sm.danger { color: var(--danger); border-color: rgba(239,68,68,0.3); }
+.btn-sm.danger:hover { background: rgba(239,68,68,0.1); }
+
+/* ─── TOAST ─── */
+.toast-container {
+  position: fixed; top: 16px; left: 50%; transform: translateX(-50%);
+  z-index: 999;
+  display: flex; flex-direction: column; gap: 8px;
+  pointer-events: none;
+}
+
+.toast {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  display: flex; align-items: center; gap: 8px;
+  animation: toastIn 0.3s ease, toastOut 0.3s ease 2.7s forwards;
+  box-shadow: var(--shadow);
+  white-space: nowrap;
+}
+
+.toast.success { border-color: var(--success); color: var(--success); }
+.toast.error { border-color: var(--danger); color: var(--danger); }
+.toast.info { border-color: var(--teal); color: var(--teal-light); }
+
+@keyframes toastIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: none; } }
+@keyframes toastOut { to { opacity: 0; transform: translateY(-8px); } }
+
+/* ─── LOADING ─── */
+.loading-overlay {
+  position: fixed; inset: 0;
+  background: var(--navy);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 300;
+  flex-direction: column; gap: 16px;
+}
+
+.loading-overlay.hidden { display: none; }
+
+.spinner {
+  width: 40px; height: 40px;
+  border: 3px solid var(--border);
+  border-top-color: var(--teal);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-text { font-size: 14px; color: var(--white-muted); }
+
+/* ─── SETUP SUPABASE PROMPT ─── */
+.supabase-setup {
+  background: rgba(245,158,11,0.1);
+  border: 1px solid rgba(245,158,11,0.4);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  margin-bottom: 16px;
+  font-size: 12px;
+  color: var(--warning);
+  display: none;
+}
+
+.supabase-setup.show { display: block; }
+.supabase-setup strong { display: block; margin-bottom: 4px; }
+
+.config-modal {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.8);
+  backdrop-filter: blur(4px);
+  z-index: 250;
+  display: flex; align-items: center; justify-content: center; padding: 20px;
+}
+
+.config-modal.hidden { display: none; }
+
+.config-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 28px;
+  width: 100%; max-width: 440px;
+}
+
+.config-card h2 { font-size: 18px; font-weight: 700; margin-bottom: 6px; }
+.config-card p { font-size: 13px; color: var(--white-muted); margin-bottom: 20px; line-height: 1.5; }
+
+/* ─── ORDER DETAILS ─── */
+.order-items-preview { font-size: 12px; color: var(--white-muted); max-width: 180px; }
+
+/* ─── RESPONSIVE ─── */
+@media (min-width: 640px) {
+  .products-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .cart-drawer { max-width: 480px; margin: 0 auto; }
+}
+</style>
+</head>
+<body>
+
+<!-- Loading -->
+<div class="loading-overlay" id="loading">
+  <div class="spinner"></div>
+  <div class="loading-text">Loading E-Medicine...</div>
+</div>
+
+<!-- Supabase Config Modal -->
+<div class="config-modal" id="configModal">
+  <div class="config-card">
+    <h2>⚙️ Supabase Setup</h2>
+    <p>Enter your Supabase credentials to enable order history and inventory management. You can find these in your Supabase project settings under <strong>API</strong>.</p>
+    <div class="form-group">
+      <label class="form-label">Supabase URL</label>
+      <input class="form-input" id="cfgUrl" placeholder="https://xxxx.supabase.co"/>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Anon Key</label>
+      <input class="form-input" id="cfgKey" placeholder="eyJhbGciOiJIUzI1NiIs..."/>
+    </div>
+    <button class="btn-primary" onclick="saveConfig()">
+      <i data-lucide="save" width="16" height="16"></i> Save & Initialize
+    </button>
+    <button class="btn-secondary" style="margin-top:10px;" onclick="skipConfig()">
+      Skip (Demo Mode – No Persistence)
+    </button>
+  </div>
+</div>
+
+<!-- Toast Container -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- App -->
+<div id="app">
+
+  <!-- TOP BAR (hidden on profile setup) -->
+  <div class="topbar" id="topbar" style="display:none">
+    <div class="topbar-brand">
+      <div class="brand-icon">
+        <i data-lucide="pill" width="18" height="18" color="white"></i>
+      </div>
+      <div class="brand-text">E-<span>Medicine</span></div>
+    </div>
+    <div class="topbar-right">
+      <button class="cart-badge-btn" onclick="toggleCart()">
+        <i data-lucide="shopping-cart" width="16" height="16"></i>
+        Cart
+        <span class="cart-count" id="cartCount">0</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ── SCREEN: PROFILE SETUP ── -->
+  <div class="screen active" id="screen-profile">
+    <div class="profile-card">
+      <div class="profile-header">
+        <div class="profile-logo">
+          <i data-lucide="pill" width="30" height="30" color="white"></i>
+        </div>
+        <h1>Welcome to E-Medicine</h1>
+        <p>Set up your pharmacy profile to get started with bulk ordering</p>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Pharmacy Name *</label>
+        <input class="form-input" id="pharmName" placeholder="Al-Shifa Pharmacy" required/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Contact Person *</label>
+        <input class="form-input" id="pharmContact" placeholder="Mohammed Rahman"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Mobile Number *</label>
+        <input class="form-input" id="pharmMobile" placeholder="+8801XXXXXXXXX" type="tel"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Delivery Address *</label>
+        <input class="form-input" id="pharmAddress" placeholder="House 12, Road 5, Dhanmondi, Dhaka"/>
+      </div>
+
+      <button class="btn-primary" onclick="saveProfile()">
+        <i data-lucide="arrow-right" width="16" height="16"></i>
+        Enter Shop
+      </button>
+    </div>
+  </div>
+
+  <!-- ── SCREEN: SHOP ── -->
+  <div class="screen" id="screen-shop">
+    <div class="shop-content">
+      <div class="search-bar">
+        <i data-lucide="search" width="18" height="18"></i>
+        <input id="searchInput" placeholder="Search medicines..." oninput="filterProducts()"/>
+      </div>
+      <div class="section-header">
+        <span class="section-title">Medicine Catalog</span>
+        <span class="section-title" id="productCount"></span>
+      </div>
+      <div class="products-grid" id="productsGrid">
+        <!-- Products rendered here -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SCREEN: MY PROFILE ── -->
+  <div class="screen" id="screen-myprofile">
+    <div class="profile-view-card">
+      <div class="profile-view-header">
+        <div class="avatar" id="profileAvatar">P</div>
+        <div>
+          <div class="profile-view-name" id="profileViewName">Pharmacy</div>
+          <div class="profile-view-sub">B2B Customer</div>
+        </div>
+      </div>
+      <div class="info-row">
+        <i data-lucide="user" width="16" height="16" class="info-row-icon"></i>
+        <div class="info-row-content">
+          <div class="info-row-label">Contact Person</div>
+          <div class="info-row-value" id="pvContact">—</div>
+        </div>
+      </div>
+      <div class="info-row">
+        <i data-lucide="phone" width="16" height="16" class="info-row-icon"></i>
+        <div class="info-row-content">
+          <div class="info-row-label">Mobile</div>
+          <div class="info-row-value" id="pvMobile">—</div>
+        </div>
+      </div>
+      <div class="info-row">
+        <i data-lucide="map-pin" width="16" height="16" class="info-row-icon"></i>
+        <div class="info-row-content">
+          <div class="info-row-label">Delivery Address</div>
+          <div class="info-row-value" id="pvAddress">—</div>
+        </div>
+      </div>
+    </div>
+    <button class="btn-secondary" onclick="editProfile()">
+      <i data-lucide="edit-3" width="16" height="16"></i> Edit Profile
+    </button>
+  </div>
+
+  <!-- ── SCREEN: ADMIN ── -->
+  <div class="screen" id="screen-admin">
+    <div class="admin-header">
+      <div class="admin-tabs">
+        <button class="admin-tab active" id="tab-history" onclick="switchAdminTab('history')">
+          <i data-lucide="clock" width="14" height="14"></i> Orders
+        </button>
+        <button class="admin-tab" id="tab-inventory" onclick="switchAdminTab('inventory')">
+          <i data-lucide="package" width="14" height="14"></i> Inventory
+        </button>
+      </div>
+    </div>
+
+    <!-- History Tab -->
+    <div class="admin-content" id="adminTabHistory">
+      <div id="ordersTableWrap">
+        <div style="text-align:center;padding:40px;color:var(--white-muted);">
+          <div class="spinner" style="margin:0 auto 12px;width:28px;height:28px;border-width:2px;"></div>
+          <p style="font-size:14px;">Loading orders...</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Inventory Tab -->
+    <div class="admin-content" id="adminTabInventory" style="display:none">
+      <div class="inventory-add">
+        <h3>+ Add New Medicine</h3>
+        <div class="form-group">
+          <label class="form-label">Medicine Name</label>
+          <input class="form-input" id="newMedName" placeholder="Paracetamol 500mg"/>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Price (৳)</label>
+            <input class="form-input" id="newMedPrice" type="number" placeholder="12.50"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Stock (units)</label>
+            <input class="form-input" id="newMedStock" type="number" placeholder="500"/>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Category</label>
+          <input class="form-input" id="newMedCat" placeholder="Analgesic"/>
+        </div>
+        <button class="btn-primary" onclick="addNewMedicine()">
+          <i data-lucide="plus" width="16" height="16"></i> Add Medicine
+        </button>
+      </div>
+
+      <div class="section-header">
+        <span class="section-title">Current Inventory</span>
+        <button class="btn-sm" onclick="loadInventory()">
+          <i data-lucide="refresh-cw" width="12" height="12"></i> Refresh
+        </button>
+      </div>
+      <div class="inventory-list" id="inventoryList">
+        <!-- Rendered here -->
+      </div>
+    </div>
+  </div>
+
+  <!-- BOTTOM NAV (hidden on profile setup) -->
+  <nav class="bottom-nav" id="bottomNav" style="display:none">
+    <button class="nav-item active" id="nav-shop" onclick="showScreen('shop')">
+      <i data-lucide="home" width="20" height="20"></i>
+      Shop
+    </button>
+    <button class="nav-item" id="nav-myprofile" onclick="showScreen('myprofile')">
+      <i data-lucide="user" width="20" height="20"></i>
+      Profile
+    </button>
+    <button class="nav-item" id="nav-admin" onclick="showScreen('admin')">
+      <i data-lucide="layout-dashboard" width="20" height="20"></i>
+      Admin
+    </button>
+  </nav>
+</div>
+
+<!-- Cart Drawer -->
+<div class="cart-panel" id="cartPanel">
+  <div class="cart-overlay" onclick="toggleCart()"></div>
+  <div class="cart-drawer">
+    <div class="cart-handle"></div>
+    <div class="cart-title">
+      <i data-lucide="shopping-cart" width="20" height="20" color="var(--teal-light)"></i>
+      Your Order
+    </div>
+    <div id="cartBody"></div>
+  </div>
+</div>
+
+<script>
+// ─── SUPABASE SETUP ───────────────────────────────────────────
+let supabase = null;
+let DEMO_MODE = false;
+
+const DEMO_ORDERS = [];
+let nextOrderId = 1000;
+
+const DEFAULT_PRODUCTS = [
+  { id: 1, name: "Napa (Paracetamol 500mg)", price: 1.50, stock: 1200, category: "Analgesic" },
+  { id: 2, name: "Amoxicillin 250mg Cap", price: 8.00, stock: 800, category: "Antibiotic" },
+  { id: 3, name: "Omeprazole 20mg", price: 6.50, stock: 600, category: "Antacid" },
+  { id: 4, name: "Metformin 500mg", price: 4.00, stock: 900, category: "Antidiabetic" },
+  { id: 5, name: "Amlodipine 5mg", price: 5.50, stock: 700, category: "Antihypertensive" },
+  { id: 6, name: "Cetirizine 10mg", price: 3.00, stock: 1100, category: "Antihistamine" },
+  { id: 7, name: "Azithromycin 500mg", price: 25.00, stock: 400, category: "Antibiotic" },
+  { id: 8, name: "Losartan 50mg", price: 7.00, stock: 500, category: "Antihypertensive" },
+  { id: 9, name: "Vitamin D3 1000IU", price: 12.00, stock: 650, category: "Supplement" },
+  { id: 10, name: "Pantoprazole 40mg", price: 9.00, stock: 450, category: "Antacid" },
+];
+
+let products = [...DEFAULT_PRODUCTS];
+let cart = {};
+
+function initSupabase(url, key) {
+  try {
+    supabase = window.supabase.createClient(url, key);
+    return true;
+  } catch(e) {
+    return false;
+  }
+}
+
+function saveConfig() {
+  const url = document.getElementById('cfgUrl').value.trim();
+  const key = document.getElementById('cfgKey').value.trim();
+  if (!url || !key) { toast('Please enter both URL and Key', 'error'); return; }
+  if (!url.startsWith('https://')) { toast('URL must start with https://', 'error'); return; }
+  
+  const ok = initSupabase(url, key);
+  if (!ok) { toast('Invalid credentials', 'error'); return; }
+  
+  localStorage.setItem('emedicine_supabase_url', url);
+  localStorage.setItem('emedicine_supabase_key', key);
+  
+  document.getElementById('configModal').classList.add('hidden');
+  toast('Supabase connected!', 'success');
+  bootApp();
+}
+
+function skipConfig() {
+  DEMO_MODE = true;
+  document.getElementById('configModal').classList.add('hidden');
+  toast('Running in demo mode', 'info');
+  bootApp();
+}
+
+// ─── APP INIT ────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', () => {
+  lucide.createIcons();
+  
+  const savedUrl = localStorage.getItem('emedicine_supabase_url');
+  const savedKey = localStorage.getItem('emedicine_supabase_key');
+  
+  if (savedUrl && savedKey) {
+    initSupabase(savedUrl, savedKey);
+    document.getElementById('configModal').classList.add('hidden');
+    bootApp();
+  } else {
+    document.getElementById('loading').classList.add('hidden');
+    document.getElementById('configModal').classList.remove('hidden');
+  }
+});
+
+async function bootApp() {
+  document.getElementById('loading').classList.remove('hidden');
+  
+  // Load cart from localStorage
+  const savedCart = localStorage.getItem('emedicine_cart');
+  if (savedCart) cart = JSON.parse(savedCart);
+  
+  // Try to load products from Supabase
+  if (!DEMO_MODE && supabase) {
+    await ensureProducts();
+    await loadProductsFromDB();
+  }
+  
+  document.getElementById('loading').classList.add('hidden');
+  
+  // Check profile
+  const profile = getProfile();
+  if (profile) {
+    showMainApp();
+    showScreen('shop');
+  } else {
+    showProfileSetup();
+  }
+  
+  lucide.createIcons();
+}
+
+async function ensureProducts() {
+  try {
+    const { data, error } = await supabase.from('products').select('id').limit(1);
+    if (error) {
+      // Table might not exist — try to seed
+      await supabase.from('products').upsert(DEFAULT_PRODUCTS.map(p => ({
+        id: p.id,
+        name: p.name,
+        price: p.price,
+        stock: p.stock,
+        category: p.category
+      })));
+    } else if (!data || data.length === 0) {
+      await supabase.from('products').upsert(DEFAULT_PRODUCTS.map(p => ({
+        id: p.id, name: p.name, price: p.price, stock: p.stock, category: p.category
+      })));
+    }
+  } catch(e) {}
+}
+
+async function loadProductsFromDB() {
+  try {
+    const { data, error } = await supabase.from('products').select('*').order('name');
+    if (data && data.length > 0) products = data;
+  } catch(e) {}
+}
+
+// ─── PROFILE ─────────────────────────────────────────────────
+function getProfile() {
+  const p = localStorage.getItem('emedicine_profile');
+  return p ? JSON.parse(p) : null;
+}
+
+function saveProfile() {
+  const name = document.getElementById('pharmName').value.trim();
+  const contact = document.getElementById('pharmContact').value.trim();
+  const mobile = document.getElementById('pharmMobile').value.trim();
+  const address = document.getElementById('pharmAddress').value.trim();
+  
+  if (!name || !contact || !mobile || !address) {
+    toast('Please fill all fields', 'error'); return;
+  }
+  
+  const profile = { name, contact, mobile, address };
+  localStorage.setItem('emedicine_profile', JSON.stringify(profile));
+  toast('Profile saved!', 'success');
+  showMainApp();
+  showScreen('shop');
+  lucide.createIcons();
+}
+
+function editProfile() {
+  localStorage.removeItem('emedicine_profile');
+  cart = {};
+  saveCart();
+  location.reload();
+}
+
+function showProfileSetup() {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-profile').classList.add('active');
+  document.getElementById('topbar').style.display = 'none';
+  document.getElementById('bottomNav').style.display = 'none';
+}
+
+function showMainApp() {
+  document.getElementById('topbar').style.display = 'flex';
+  document.getElementById('bottomNav').style.display = 'flex';
+  renderProfileView();
+}
+
+function renderProfileView() {
+  const p = getProfile();
+  if (!p) return;
+  document.getElementById('profileAvatar').textContent = p.name.charAt(0).toUpperCase();
+  document.getElementById('profileViewName').textContent = p.name;
+  document.getElementById('pvContact').textContent = p.contact;
+  document.getElementById('pvMobile').textContent = p.mobile;
+  document.getElementById('pvAddress').textContent = p.address;
+}
+
+// ─── NAVIGATION ──────────────────────────────────────────────
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + id).classList.add('active');
+  
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const navEl = document.getElementById('nav-' + id);
+  if (navEl) navEl.classList.add('active');
+  
+  if (id === 'shop') renderProducts();
+  if (id === 'admin') { loadOrders(); loadInventory(); }
+  
+  lucide.createIcons();
+}
+
+// ─── PRODUCTS ────────────────────────────────────────────────
+function filterProducts() {
+  renderProducts(document.getElementById('searchInput').value);
+}
+
+function renderProducts(query = '') {
+  const q = query.toLowerCase();
+  const filtered = products.filter(p =>
+    p.name.toLowerCase().includes(q) || (p.category || '').toLowerCase().includes(q)
+  );
+  
+  document.getElementById('productCount').textContent = filtered.length + ' items';
+  
+  const grid = document.getElementById('productsGrid');
+  if (filtered.length === 0) {
+    grid.innerHTML = `<div style="text-align:center;padding:40px;color:var(--white-muted);grid-column:1/-1;">
+      <div style="font-size:32px;margin-bottom:8px;">🔍</div>
+      <p>No medicines found</p>
+    </div>`;
+    return;
+  }
+  
+  grid.innerHTML = filtered.map(p => {
+    const qty = cart[p.id] || 0;
+    const stockLabel = p.stock === 0 ? 'Out of stock' : p.stock < 50 ? `Low: ${p.stock}` : `${p.stock} units`;
+    const stockClass = p.stock === 0 ? 'out' : p.stock < 50 ? 'low' : '';
+    return `
+    <div class="product-card">
+      <div class="product-icon">
+        <i data-lucide="pill" width="20" height="20"></i>
+      </div>
+      <div class="product-info">
+        <div class="product-name">${p.name}</div>
+        <div class="product-meta">
+          <span class="product-price">৳${parseFloat(p.price).toFixed(2)}</span>
+          <span class="product-stock ${stockClass}">${stockLabel}</span>
+        </div>
+      </div>
+      <div class="qty-control">
+        <button class="qty-btn" onclick="updateCart(${p.id}, -1)">−</button>
+        <span class="qty-value" id="qty-${p.id}">${qty}</span>
+        <button class="qty-btn" onclick="updateCart(${p.id}, 1)" ${p.stock === 0 ? 'disabled' : ''}>+</button>
+      </div>
+    </div>`;
+  }).join('');
+  
+  lucide.createIcons();
+}
+
+function updateCart(productId, delta) {
+  const product = products.find(p => p.id == productId);
+  if (!product) return;
+  
+  const current = cart[productId] || 0;
+  const newQty = Math.max(0, Math.min(current + delta, product.stock));
+  
+  if (newQty === 0) delete cart[productId];
+  else cart[productId] = newQty;
+  
+  saveCart();
+  
+  const el = document.getElementById('qty-' + productId);
+  if (el) el.textContent = newQty;
+  
+  updateCartBadge();
+}
+
+function saveCart() {
+  localStorage.setItem('emedicine_cart', JSON.stringify(cart));
+}
+
+function updateCartBadge() {
+  const total = Object.values(cart).reduce((a, b) => a + b, 0);
+  document.getElementById('cartCount').textContent = total;
+}
+
+// ─── CART PANEL ───────────────────────────────────────────────
+function toggleCart() {
+  const panel = document.getElementById('cartPanel');
+  panel.classList.toggle('open');
+  if (panel.classList.contains('open')) renderCartPanel();
+  lucide.createIcons();
+}
+
+function renderCartPanel() {
+  const cartBody = document.getElementById('cartBody');
+  const items = Object.entries(cart);
+  
+  if (items.length === 0) {
+    cartBody.innerHTML = `<div class="empty-cart">
+      <i data-lucide="shopping-cart" width="40" height="40"></i>
+      <p>Your cart is empty</p>
+    </div>
+    <button class="btn-secondary" onclick="toggleCart()">Browse Medicines</button>`;
+    lucide.createIcons();
+    return;
+  }
+  
+  let grandTotal = 0;
+  const itemLines = items.map(([pid, qty]) => {
+    const product = products.find(p => p.id == pid);
+    if (!product) return '';
+    const subtotal = product.price * qty;
+    grandTotal += subtotal;
+    return `<div class="cart-item">
+      <div>
+        <div class="cart-item-name">${product.name}</div>
+        <div class="cart-item-detail">${qty} × ৳${parseFloat(product.price).toFixed(2)} = ৳${subtotal.toFixed(2)}</div>
+      </div>
+      <button class="cart-item-remove" onclick="removeFromCart(${pid})">
+        <i data-lucide="x" width="16" height="16"></i>
+      </button>
+    </div>`;
+  }).join('');
+  
+  cartBody.innerHTML = `
+    <div class="cart-items">${itemLines}</div>
+    <div class="cart-summary">
+      <div class="summary-row"><span>${items.length} item type(s)</span></div>
+      <div class="summary-total">
+        <span>Grand Total</span>
+        <span>৳${grandTotal.toFixed(2)}</span>
+      </div>
+    </div>
+    <button class="btn-whatsapp" onclick="placeOrder(${grandTotal.toFixed(2)})">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+      Place Order via WhatsApp
+    </button>`;
+  
+  lucide.createIcons();
+}
+
+function removeFromCart(pid) {
+  delete cart[pid];
+  saveCart();
+  updateCartBadge();
+  renderCartPanel();
+  renderProducts(document.getElementById('searchInput').value);
+}
+
+// ─── ORDER / WHATSAPP ─────────────────────────────────────────
+async function placeOrder(grandTotal) {
+  const profile = getProfile();
+  if (!profile) { toast('Profile not found', 'error'); return; }
+  
+  const items = Object.entries(cart);
+  if (items.length === 0) { toast('Cart is empty', 'error'); return; }
+  
+  // Build order items
+  const orderItems = items.map(([pid, qty]) => {
+    const p = products.find(pr => pr.id == pid);
+    return { id: pid, name: p.name, qty, price: p.price, subtotal: p.price * qty };
+  });
+  
+  const orderData = {
+    pharmacy_name: profile.name,
+    contact_person: profile.contact,
+    mobile: profile.mobile,
+    address: profile.address,
+    items: JSON.stringify(orderItems),
+    total: parseFloat(grandTotal),
+    status: 'pending',
+    created_at: new Date().toISOString()
+  };
+  
+  // Save to Supabase or demo
+  let orderId;
+  if (!DEMO_MODE && supabase) {
+    try {
+      const { data, error } = await supabase.from('orders').insert([orderData]).select();
+      if (error) throw error;
+      orderId = data[0].id;
+      toast('Order saved to database!', 'success');
+    } catch(e) {
+      toast('DB save failed, continuing...', 'info');
+      orderId = ++nextOrderId;
+    }
+  } else {
+    orderId = ++nextOrderId;
+    DEMO_ORDERS.unshift({ ...orderData, id: orderId });
+    toast('Order saved (demo mode)', 'info');
+  }
+  
+  // Build WhatsApp message
+  const itemsText = orderItems.map(i =>
+    `  • ${i.name} × ${i.qty} = ৳${i.subtotal.toFixed(2)}`
+  ).join('\n');
+  
+  const msg = `📦 *E-MEDICINE ORDER #${orderId}*
+--------------------------
+🏥 *PHARMACY:* ${profile.name}
+👤 *CONTACT:* ${profile.contact}
+📱 *MOBILE:* ${profile.mobile}
+
+🛒 *ITEMS:*
+${itemsText}
+
+💰 *TOTAL: ৳${parseFloat(grandTotal).toFixed(2)}*
+
+📍 *ADDRESS:*
+${profile.address}
+--------------------------
+Please confirm delivery. Thank you!`;
+  
+  const encoded = encodeURIComponent(msg);
+  const waUrl = `https://wa.me/8801838408542?text=${encoded}`;
+  
+  // Clear cart
+  cart = {};
+  saveCart();
+  updateCartBadge();
+  
+  // Close cart panel
+  document.getElementById('cartPanel').classList.remove('open');
+  
+  // Redirect to WhatsApp
+  window.open(waUrl, '_blank');
+  
+  renderProducts();
+}
+
+// ─── ADMIN: ORDERS ────────────────────────────────────────────
+async function loadOrders() {
+  const wrap = document.getElementById('ordersTableWrap');
+  
+  let orders = [];
+  
+  if (!DEMO_MODE && supabase) {
+    try {
+      const { data, error } = await supabase
+        .from('orders')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (!error && data) orders = data;
+    } catch(e) {}
+  } else {
+    orders = DEMO_ORDERS;
+  }
+  
+  if (orders.length === 0) {
+    wrap.innerHTML = `<div style="text-align:center;padding:60px;color:var(--white-muted);">
+      <div style="font-size:36px;margin-bottom:8px;">📋</div>
+      <p style="font-size:14px;">No orders yet</p>
+    </div>`;
+    return;
+  }
+  
+  wrap.innerHTML = `
+    <div class="orders-table-wrap">
+      <table class="orders-table">
+        <thead>
+          <tr>
+            <th>#ID</th>
+            <th>Pharmacy</th>
+            <th>Items</th>
+            <th>Total</th>
+            <th>Status</th>
+            <th>Date</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${orders.map(o => {
+            let itemsSummary = '';
+            try {
+              const items = typeof o.items === 'string' ? JSON.parse(o.items) : o.items;
+              itemsSummary = items.slice(0,2).map(i => `${i.name} ×${i.qty}`).join(', ');
+              if (items.length > 2) itemsSummary += ` +${items.length-2} more`;
+            } catch(e) { itemsSummary = 'N/A'; }
+            
+            const date = o.created_at ? new Date(o.created_at).toLocaleDateString('en-GB') : '—';
+            const isDelivered = o.status === 'delivered';
+            
+            return `<tr>
+              <td style="font-family:var(--mono);color:var(--teal-light)">#${o.id}</td>
+              <td>
+                <div style="font-weight:600;font-size:13px;">${o.pharmacy_name}</div>
+                <div style="font-size:11px;color:var(--white-muted)">${o.mobile || ''}</div>
+              </td>
+              <td class="order-items-preview">${itemsSummary}</td>
+              <td style="font-family:var(--mono);font-weight:700;color:var(--accent)">৳${parseFloat(o.total||0).toFixed(2)}</td>
+              <td>
+                <span class="status-badge ${o.status}">
+                  ${o.status === 'delivered' ? '✓' : '⏳'} ${o.status}
+                </span>
+              </td>
+              <td style="font-size:12px;color:var(--white-muted)">${date}</td>
+              <td>
+                ${!isDelivered ? `<button class="btn-deliver" onclick="markDelivered('${o.id}')">
+                  ✓ Delivered
+                </button>` : '<span style="font-size:12px;color:var(--success)">Done</span>'}
+              </td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+async function markDelivered(orderId) {
+  if (!DEMO_MODE && supabase) {
+    try {
+      await supabase.from('orders').update({ status: 'delivered' }).eq('id', orderId);
+    } catch(e) { toast('Update failed', 'error'); return; }
+  } else {
+    const o = DEMO_ORDERS.find(o => o.id == orderId);
+    if (o) o.status = 'delivered';
+  }
+  toast('Marked as delivered!', 'success');
+  loadOrders();
+}
+
+// ─── ADMIN: INVENTORY ─────────────────────────────────────────
+async function loadInventory() {
+  if (!DEMO_MODE && supabase) await loadProductsFromDB();
+  
+  const list = document.getElementById('inventoryList');
+  list.innerHTML = products.map(p => `
+    <div class="inventory-item" id="inv-${p.id}">
+      <div class="product-icon" style="width:38px;height:38px;flex-shrink:0;">
+        <i data-lucide="pill" width="16" height="16"></i>
+      </div>
+      <div class="inventory-item-info">
+        <div class="inventory-item-name">${p.name}</div>
+        <div class="inventory-item-meta">৳${parseFloat(p.price).toFixed(2)} · ${p.stock} units · ${p.category || 'General'}</div>
+        <div class="inventory-edit-form" id="edit-${p.id}">
+          <div class="form-row" style="margin-bottom:10px;">
+            <div>
+              <label class="form-label">Price (৳)</label>
+              <input class="form-input" id="ep-${p.id}" value="${p.price}" type="number" step="0.01"/>
+            </div>
+            <div>
+              <label class="form-label">Stock</label>
+              <input class="form-input" id="es-${p.id}" value="${p.stock}" type="number"/>
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;">
+            <button class="btn-sm" onclick="updateMedicine(${p.id})">Save</button>
+            <button class="btn-sm" onclick="toggleEdit(${p.id})">Cancel</button>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;gap:6px;flex-shrink:0;">
+        <button class="btn-sm" onclick="toggleEdit(${p.id})">
+          <i data-lucide="edit-2" width="12" height="12"></i>
+        </button>
+      </div>
+    </div>`).join('');
+  
+  lucide.createIcons();
+}
+
+function toggleEdit(id) {
+  const el = document.getElementById('edit-' + id);
+  el.classList.toggle('open');
+}
+
+async function updateMedicine(id) {
+  const price = parseFloat(document.getElementById('ep-' + id).value);
+  const stock = parseInt(document.getElementById('es-' + id).value);
+  
+  if (isNaN(price) || isNaN(stock)) { toast('Invalid values', 'error'); return; }
+  
+  if (!DEMO_MODE && supabase) {
+    try {
+      await supabase.from('products').update({ price, stock }).eq('id', id);
+    } catch(e) { toast('Update failed', 'error'); return; }
+  }
+  
+  const p = products.find(x => x.id == id);
+  if (p) { p.price = price; p.stock = stock; }
+  
+  toast('Updated!', 'success');
+  loadInventory();
+}
+
+async function addNewMedicine() {
+  const name = document.getElementById('newMedName').value.trim();
+  const price = parseFloat(document.getElementById('newMedPrice').value);
+  const stock = parseInt(document.getElementById('newMedStock').value);
+  const category = document.getElementById('newMedCat').value.trim() || 'General';
+  
+  if (!name || isNaN(price) || isNaN(stock)) { toast('Fill all fields correctly', 'error'); return; }
+  
+  const newMed = { name, price, stock, category };
+  
+  if (!DEMO_MODE && supabase) {
+    try {
+      const { data, error } = await supabase.from('products').insert([newMed]).select();
+      if (error) throw error;
+      products.push(data[0]);
+    } catch(e) {
+      toast('Insert failed: ' + e.message, 'error'); return;
+    }
+  } else {
+    newMed.id = Math.max(...products.map(p => p.id)) + 1;
+    products.push(newMed);
+  }
+  
+  document.getElementById('newMedName').value = '';
+  document.getElementById('newMedPrice').value = '';
+  document.getElementById('newMedStock').value = '';
+  document.getElementById('newMedCat').value = '';
+  
+  toast('Medicine added!', 'success');
+  loadInventory();
+}
+
+// ─── ADMIN TABS ───────────────────────────────────────────────
+function switchAdminTab(tab) {
+  document.getElementById('adminTabHistory').style.display = tab === 'history' ? 'block' : 'none';
+  document.getElementById('adminTabInventory').style.display = tab === 'inventory' ? 'block' : 'none';
+  document.getElementById('tab-history').classList.toggle('active', tab === 'history');
+  document.getElementById('tab-inventory').classList.toggle('active', tab === 'inventory');
+  lucide.createIcons();
+}
+
+// ─── SERVICE WORKER ──────────────────────────────────────────
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  });
+}
+
+// ─── TOAST ────────────────────────────────────────────────────
+function toast(msg, type = 'info') {
+  const container = document.getElementById('toastContainer');
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  const icons = { success: 'check-circle', error: 'alert-circle', info: 'info' };
+  el.innerHTML = `<i data-lucide="${icons[type]||'info'}" width="14" height="14"></i>${msg}`;
+  container.appendChild(el);
+  lucide.createIcons();
+  setTimeout(() => el.remove(), 3200);
+}
+</script>
+
+</body>
+</html>
